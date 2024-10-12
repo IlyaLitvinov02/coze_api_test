@@ -11,10 +11,10 @@ export class AppController {
   }
 
   @Post('/create-message')
-  handleSendPulseWebhook({userId, text}: {
+  async handleSendPulseWebhook({userId, text}: {
     userId: string
     text: string
   }){
-    this.appService.handleSendPulseWebhook({userId, text})
+    return await this.appService.handleSendPulseWebhook({userId, text})
   }
 }
