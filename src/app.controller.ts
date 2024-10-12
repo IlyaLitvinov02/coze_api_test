@@ -1,9 +1,18 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
+import { ApiBody, ApiProperty } from '@nestjs/swagger';
+
+export class CreateMessageDto {
+  @ApiProperty()
+  userId: string;
+
+  @ApiProperty()
+  text: string;
+}
 
 @Controller('api')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Get()
   getHello(): string {
@@ -11,10 +20,8 @@ export class AppController {
   }
 
   @Post('/create-message')
-  async handleSendPulseWebhook({userId, text}: {
-    userId: string
-    text: string
-  }){
-    return await this.appService.handleSendPulseWebhook({userId, text})
+  async createMessage(@Body() { userId, text }: CreateMessageDto) {
+    const result = await this.appService.createMessage({ userId, text })
+    return JSON.stringify(result)
   }
 }
