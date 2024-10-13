@@ -8,6 +8,10 @@ export class CreateMessageDto {
 
   @ApiProperty()
   text: string;
+
+
+  @ApiProperty()
+  conversationId?: string;
 }
 
 @Controller('api')
@@ -20,8 +24,8 @@ export class AppController {
   }
 
   @Post('/create-message')
-  async createMessage(@Body() { userId, text }: CreateMessageDto) {
-    const result = await this.appService.createMessage({ userId, text })
+  async createMessage(@Body() { userId, text, conversationId }: CreateMessageDto) {
+    const result = await this.appService.createMessage({ userId, text, conversationId })
     return JSON.stringify(result)
   }
 }

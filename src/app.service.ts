@@ -1,27 +1,29 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
+import { Stream } from 'stream';
+import { CozeEventParserService } from './coze-event-parser-service';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly httpService: HttpService) { }
+  constructor(private readonly httpService: HttpService, private readonly cozeEventParserService: CozeEventParserService) { }
   getHello(): string {
     return 'Hello World!';
   }
 
-  async createMessage({ userId, text }: {
+  async createMessage({text, userId, conversationId}: {
     text: string
-    userId: string
+    userId: string,
+    conversationId?: string
   }) {
-    const conversationId = '7424996473340805126' //response.data.data.conversation_id
-
     const response = await lastValueFrom(
-      this.httpService.post("https://api.coze.com/v3/chat",
+      this.httpService.post(
+        "https://api.coze.com/v3/chat",
         {
-          stream: false,
+          stream: true,
           bot_id: '7368357412157489158',
           user_id: userId,
-          additional_messages: [{ role: 'user', content_type: 'text', content: text }]
+          additional_messages: [{ role: 'user', content_type: 'text', content: text }],
         },
         {
           params: {
@@ -30,28 +32,18 @@ export class AppService {
           headers: {
             "Authorization": "Bearer pat_OdgLSrNrR9XzTpf8XJTsu3yVXxcmzoCK4fTO5Cj9tyuTF8FNBlC9GGJLUQzFPhs2",
             "Content-Type": "application/json",
-          }
-        }
-      )
-    )
-    console.log('response: ', JSON.stringify(response.data))
-    await new Promise(resolve => setTimeout(resolve, 30000))
-    const messageId = response.data.data.id
-    const messageResponse = await lastValueFrom(
-      this.httpService.post("https://api.coze.com/v1/conversation/message/list", {},
-        {
-          params: {
-            conversation_id: conversationId,
           },
-          headers: {
-            "Authorization": "Bearer pat_OdgLSrNrR9XzTpf8XJTsu3yVXxcmzoCK4fTO5Cj9tyuTF8FNBlC9GGJLUQzFPhs2",
-            "Content-Type": "application/json",
-          }
         }
       )
-    )
-    console.log('messageResponse: ', JSON.stringify(messageResponse.data))
-
-    return messageResponse.data.data[0]
+    );
+    const parsedEvents = this.cozeEventParserService.parseCozeData(response.data)
+    const completedMessage = parsedEvents.find(({ event }) => event === "conversation.message.completed")?.data
+    const failedMessage = parsedEvents.find(({ event }) => event === "conversation.chat.failed")?.data
+    if (completedMessage) {
+      return completedMessage
+    }
+    if (failedMessage) {
+      throw new BadRequestException(failedMessage)
+    }
   }
 }
