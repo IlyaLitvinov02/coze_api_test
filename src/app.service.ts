@@ -21,7 +21,7 @@ export class AppService {
         "https://api.coze.com/v3/chat",
         {
           stream: true,
-          bot_id: '7368357412157489158',
+          bot_id: process.env.COZE_API_BOT_ID,
           user_id: userId,
           additional_messages: [{ role: 'user', content_type: 'text', content: text }],
         },
@@ -30,7 +30,7 @@ export class AppService {
             conversation_id: conversationId,
           },
           headers: {
-            "Authorization": "Bearer pat_OdgLSrNrR9XzTpf8XJTsu3yVXxcmzoCK4fTO5Cj9tyuTF8FNBlC9GGJLUQzFPhs2",
+            "Authorization": `Bearer ${process.env.COZE_API_ACCESS_TOKEN}`,
             "Content-Type": "application/json",
           },
         }
@@ -47,3 +47,4 @@ export class AppService {
     }
   }
 }
+7426402368587300870
